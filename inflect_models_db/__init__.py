@@ -10,7 +10,9 @@ from inflect_models_db.registry import all_cards, get_model, list_models, models
 from inflect_models_db.run import (
     Trajectory,
     apply_initials,
+    as_vivarium_document,
     build_core,
+    run_as_module,
     run_model,
     run_scenario,
 )
@@ -39,7 +41,9 @@ __all__ = [
     "models_root",
     "Trajectory",
     "apply_initials",
+    "as_vivarium_document",
     "build_core",
+    "run_as_module",
     "run_model",
     "run_scenario",
     "Check",

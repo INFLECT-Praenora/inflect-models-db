@@ -108,3 +108,79 @@ def run_scenario(card, scenario_name: str, core=None) -> Trajectory:
         initials=sc.initials,
         core=core or build_core(),
     )
+
+
+# --- running the model as a composable vivarium (process-bigraph) module -----
+#
+# The functions above drive a one-shot UTC Step. The ones below instead wrap the
+# model as a *time-coupled* ``TelluriumProcess`` inside a process-bigraph
+# ``Composite`` with a RAM emitter — i.e. exactly the form a model takes when it
+# is dropped into a larger bigraph document and composed with other simulators.
+
+
+def as_vivarium_document(
+    antimony: str,
+    *,
+    interval: float = 1.0,
+    initials: dict[str, float] | None = None,
+) -> dict:
+    """Build a process-bigraph composite document for the model.
+
+    Returns a document dict (TelluriumProcess + stores + RAM emitter) ready for
+    ``process_bigraph.Composite({'state': doc}, core=...)``. Initial-condition
+    overrides are passed as native ``species_overrides`` rather than text edits.
+    """
+    from viva_tellurium import make_tellurium_document
+
+    return make_tellurium_document(
+        model=antimony,
+        model_format="antimony",
+        interval=interval,
+        species_overrides={k: float(v) for k, v in (initials or {}).items()},
+    )
+
+
+def _floating_species_ids(antimony: str) -> list[str]:
+    import tellurium as te
+
+    return list(te.loadAntimonyModel(antimony).getFloatingSpeciesIds())
+
+
+def run_as_module(
+    antimony: str,
+    *,
+    duration: float,
+    interval: float = 1.0,
+    initials: dict[str, float] | None = None,
+    species_ids: list[str] | None = None,
+    core=None,
+) -> Trajectory:
+    """Run the model as a composed process-bigraph module; return a Trajectory.
+
+    Wraps the Antimony as a time-driven ``TelluriumProcess``, composes it with a
+    RAM emitter, runs the ``Composite`` for ``duration``, and reshapes the
+    emitted rows into a :class:`Trajectory`. This is the path that proves a model
+    in this database is a real, composable vivarium module — not just a script.
+    """
+    from process_bigraph import Composite, gather_emitter_results
+    from process_bigraph.emitter import RAMEmitter
+
+    from viva_tellurium import TelluriumProcess
+
+    core = core or build_core()
+    core.register_link("TelluriumProcess", TelluriumProcess)
+    core.register_link("ram-emitter", RAMEmitter)
+
+    doc = as_vivarium_document(antimony, interval=interval, initials=initials)
+    sim = Composite({"state": doc}, core=core)
+    sim.run(float(duration))
+
+    rows = gather_emitter_results(sim)[("emitter",)]
+    ids = species_ids or _floating_species_ids(antimony)
+    times = [float(r["time"]) for r in rows]
+    # The species port is a bulk numpy array ordered by the model's floating
+    # species ids (viva-tellurium's default bulk_species=True).
+    species = {
+        sid: [float(r["species"][i]) for r in rows] for i, sid in enumerate(ids)
+    }
+    return Trajectory(times=times, species=species)

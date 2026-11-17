@@ -34,9 +34,11 @@ uv pip install -e ".[dev]"      # pulls viva-tellurium + tellurium/libroadrunner
 
 ## Demo
 
-One command reproduces the headline result — the validation table, the
-`P(0)` sweep where the outcome flips from healthy to aseptic death, and a
-bifurcation figure:
+One command walks the whole pipeline — **PDF → Antimony → validation → vivarium
+module** — on the Reynolds 2006 example: it reads the source PDF, shows the
+extracted Antimony, validates it against the published steady states through
+viva-tellurium (with a `P(0)` sweep + bifurcation figure), and finally runs the
+same model as a composed `process-bigraph` module.
 
 ```bash
 python demo/demo.py        # or: uv run python demo/demo.py

@@ -38,7 +38,8 @@ automatically with no new test code.
 ```python
 from inflect_models_db import (
     list_models, get_model,            # registry
-    run_model, run_scenario,           # execution (via viva-tellurium)
+    run_model, run_scenario,           # execution (one-shot UTC Step)
+    run_as_module, as_vivarium_document,  # execution (composed bigraph module)
     validate_model, validate_scenario, # published-result checks
     check_threshold, reproduce_figures,
 )
@@ -47,3 +48,17 @@ card = get_model("reynolds-2006-acute-inflammation")
 print(validate_model(card).summary())
 reproduce_figures(card)
 ```
+
+## Two ways to run a model
+
+Both go through viva-tellurium:
+
+- **`run_model` / `run_scenario`** wrap the Antimony as a one-shot
+  `TelluriumUTCStep` and return a dense trajectory. This is what validation uses.
+- **`run_as_module` / `as_vivarium_document`** wrap it as a *time-coupled*
+  `TelluriumProcess` inside a `process-bigraph` `Composite` with an emitter —
+  the form the model takes when composed with other simulators in a bigraph
+  document. `as_vivarium_document` returns the document dict to drop into a
+  bigger composite; `run_as_module` runs it and returns a `Trajectory`.
+
+See the [demo](../demo) for both, plus the PDF→Antimony extraction stages.
