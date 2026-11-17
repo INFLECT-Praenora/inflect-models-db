@@ -32,6 +32,18 @@ uv venv .venv && source .venv/bin/activate
 uv pip install -e ".[dev]"      # pulls viva-tellurium + tellurium/libroadrunner
 ```
 
+## Demo
+
+One command reproduces the headline result — the validation table, the
+`P(0)` sweep where the outcome flips from healthy to aseptic death, and a
+bifurcation figure:
+
+```bash
+python demo/demo.py        # or: uv run python demo/demo.py
+```
+
+See [`demo/`](./demo).
+
 ## Use
 
 ```bash
