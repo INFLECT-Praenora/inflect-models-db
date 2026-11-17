@@ -71,6 +71,20 @@ validation:
       variable: D          # readout: final tissue damage
       healthy_below: 1.0   # D < 1 => healthy; D high => non-healthy attractor
 
+  # Convergence guard: every scenario must actually reach steady state (max
+  # relative change of any species across the final 10% of the run below this),
+  # so the endpoint targets are not read mid-transient.
+  steady_state:
+    rel_change_below: 1.0e-3
+
+  # Independent cross-check: the extracted Antimony's full trajectory must agree
+  # (per-species NRMSE) with the community-curated SBML, simulated directly by
+  # tellurium — a different code path from the model under test.
+  oracle:
+    kind: sbml
+    file: reference/BIOMD0000000714.xml
+    nrmse_below: 1.0e-3
+
 figures:
   - name: outcomes
     kind: outcome-scenarios

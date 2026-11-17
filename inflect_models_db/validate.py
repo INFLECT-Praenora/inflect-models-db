@@ -72,15 +72,68 @@ class ThresholdResult:
 
 
 @dataclasses.dataclass(frozen=True)
+class ConvergenceResult:
+    """Did the scenario actually reach steady state (so endpoint targets are
+    meaningful, not read mid-transient)?"""
+
+    scenario: str
+    max_rel_change: float
+    threshold: float
+
+    @property
+    def ok(self) -> bool:
+        return self.max_rel_change <= self.threshold
+
+    def __str__(self) -> str:
+        mark = "PASS" if self.ok else "FAIL"
+        return (
+            f"[{mark}] {self.scenario}: converged "
+            f"(max rel. change over final window = {self.max_rel_change:.2e} "
+            f"<= {self.threshold:g})"
+        )
+
+
+@dataclasses.dataclass(frozen=True)
+class OracleResult:
+    """Full-trajectory agreement with an independent reference encoding
+    (e.g. the curated BioModels SBML), per species, by NRMSE."""
+
+    scenario: str
+    per_species_nrmse: dict[str, float]
+    threshold: float
+
+    @property
+    def worst(self) -> float:
+        return max(self.per_species_nrmse.values()) if self.per_species_nrmse else 0.0
+
+    @property
+    def ok(self) -> bool:
+        return self.worst <= self.threshold
+
+    def __str__(self) -> str:
+        mark = "PASS" if self.ok else "FAIL"
+        worst_sp = max(self.per_species_nrmse, key=self.per_species_nrmse.get)
+        return (
+            f"[{mark}] {self.scenario}: matches independent oracle "
+            f"(worst NRMSE {self.worst:.2e} on {worst_sp} <= {self.threshold:g})"
+        )
+
+
+@dataclasses.dataclass(frozen=True)
 class ModelReport:
     slug: str
     scenarios: list[ScenarioResult]
     threshold: ThresholdResult | None
+    convergence: list[ConvergenceResult] = dataclasses.field(default_factory=list)
+    oracle: list[OracleResult] = dataclasses.field(default_factory=list)
 
     @property
     def ok(self) -> bool:
-        return all(s.ok for s in self.scenarios) and (
-            self.threshold is None or self.threshold.ok
+        return (
+            all(s.ok for s in self.scenarios)
+            and (self.threshold is None or self.threshold.ok)
+            and all(c.ok for c in self.convergence)
+            and all(o.ok for o in self.oracle)
         )
 
     def summary(self) -> str:
@@ -89,6 +142,10 @@ class ModelReport:
             lines.append(f"  scenario {s.name}: {'OK' if s.ok else 'FAILED'}")
             for c in s.checks:
                 lines.append(f"    {c}")
+        for c in self.convergence:
+            lines.append(f"  {c}")
+        for o in self.oracle:
+            lines.append(f"  {o}")
         if self.threshold is not None:
             lines.append(f"  {self.threshold}")
         return "\n".join(lines)
@@ -145,11 +202,85 @@ def check_threshold(card, core=None) -> ThresholdResult | None:
     )
 
 
+def check_convergence(card, name: str, core=None) -> ConvergenceResult:
+    """Confirm the scenario reached steady state: the largest relative change
+    of any species across the final 10% of the trajectory is below the card's
+    ``steady_state.rel_change_below`` (default 1e-3). Guards against reading a
+    target mid-transient (e.g. too short a time span)."""
+    ss = card.steady_state or {}
+    thr = float(ss.get("rel_change_below", 1e-3))
+    traj = run_scenario(card, name, core=core)
+    n = len(traj.times)
+    window = max(2, n // 10)
+    watched = card.species or list(traj.species)
+    worst = 0.0
+    for sp in watched:
+        series = traj.series(sp)
+        tail = series[-window:]
+        scale = max(abs(v) for v in series) or 1.0
+        rel = (max(tail) - min(tail)) / scale
+        worst = max(worst, rel)
+    return ConvergenceResult(scenario=name, max_rel_change=worst, threshold=thr)
+
+
+def check_oracle(card, name: str, core=None) -> OracleResult | None:
+    """Compare the extracted model's full trajectory against an independent
+    reference encoding, per species, by NRMSE.
+
+    The oracle is run through a *different* path from the model under test — the
+    curated SBML is simulated directly by tellurium/libroadrunner, not through
+    the repo's Antimony — so agreement is real corroboration, not a tautology.
+    Returns None when the card declares no oracle.
+    """
+    if not card.oracle:
+        return None
+    import numpy as np
+    import tellurium as te
+
+    spec = card.oracle
+    if spec.get("kind", "sbml") != "sbml":
+        raise ValueError(f"{card.slug}: unsupported oracle kind {spec.get('kind')!r}")
+    thr = float(spec.get("nrmse_below", 1e-2))
+
+    ours = run_scenario(card, name, core=core)
+    sc = card.scenario(name)
+    t = card.time
+    sbml = (card.path / spec["file"]).read_text()
+
+    rr = te.loadSBMLModel(sbml)
+    rr.reset()
+    for k, v in sc.initials.items():
+        rr[f"init({k})"] = float(v)
+    selections = ["time"] + [f"[{s}]" for s in card.species]
+    res = rr.simulate(t["start"], t["end"], t["n_points"], selections)
+
+    per_species: dict[str, float] = {}
+    for i, sp in enumerate(card.species):
+        ref = np.asarray(res[:, i + 1], dtype=float)
+        got = np.asarray(ours.series(sp), dtype=float)
+        rng = float(ref.max() - ref.min())
+        denom = rng if rng > 1e-9 else max(float(np.abs(ref).max()), 1e-9)
+        per_species[sp] = float(np.sqrt(np.mean((got - ref) ** 2)) / denom)
+    return OracleResult(scenario=name, per_species_nrmse=per_species, threshold=thr)
+
+
 def validate_model(card, core=None) -> ModelReport:
     core = core or build_core()
     scenarios = [validate_scenario(card, n, core=core) for n in card.scenario_names]
     threshold = check_threshold(card, core=core)
-    return ModelReport(slug=card.slug, scenarios=scenarios, threshold=threshold)
+    convergence = [check_convergence(card, n, core=core) for n in card.scenario_names]
+    oracle = [
+        o
+        for n in card.scenario_names
+        if (o := check_oracle(card, n, core=core)) is not None
+    ]
+    return ModelReport(
+        slug=card.slug,
+        scenarios=scenarios,
+        threshold=threshold,
+        convergence=convergence,
+        oracle=oracle,
+    )
 
 
 def reproduce_figures(card, outdir: str | Path | None = None, core=None) -> list[Path]:

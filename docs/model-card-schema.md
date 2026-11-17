@@ -40,6 +40,14 @@ validation:
     between: [1.0, 1.2]                 # the boundary lies in this bracket
     classify_by: {variable: D, healthy_below: 1.0}
 
+  steady_state:                         # optional convergence guard (recommended)
+    rel_change_below: 1.0e-3            # max rel. change over the final 10% window
+
+  oracle:                              # optional independent full-trajectory check
+    kind: sbml                          # simulate this encoding via tellurium directly
+    file: reference/BIOMD0000000714.xml # and compare the extracted model to it
+    nrmse_below: 1.0e-3                 # per-species NRMSE must stay below this
+
 figures:                                # optional; default is one 'outcomes' grid
   - name: outcomes
     kind: outcome-scenarios
@@ -56,5 +64,13 @@ figures:                                # optional; default is one 'outcomes' gr
   `variable`); the outcome is classified by `classify_by` (healthy iff the
   readout variable's final value is `< healthy_below`). The check passes when the
   low value is healthy and the high value is not — i.e. the boundary is bracketed.
+- **steady_state** — after each scenario runs, the largest relative change of any
+  species across the final 10% of the trajectory must be `< rel_change_below`.
+  Guards against reading targets before the system has settled.
+- **oracle** — an independent reference encoding (a deposited SBML). Validation
+  simulates it directly with tellurium (a different path from the repo's
+  Antimony) using each scenario's initials, and requires per-species
+  `NRMSE < nrmse_below` over the whole trajectory. Use when the model is
+  deposited in BioModels or similar.
 - **figures** — `reproduce_figures` renders one panel per declared species, one
   line per scenario, to the given file.

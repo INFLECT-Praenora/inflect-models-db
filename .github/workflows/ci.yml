@@ -26,5 +26,8 @@ jobs:
       - name: Run tests
         run: uv run pytest -q
 
+      - name: Validation gate (every model must be extracted + validated)
+        run: uv run python scripts/check_models.py
+
       - name: Reproduce figures (sanity check the renderer)
         run: uv run python -m inflect_models_db.cli reproduce

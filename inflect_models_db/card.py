@@ -60,6 +60,8 @@ class ModelCard:
     time: dict[str, Any]
     scenarios: list[Scenario]
     threshold: Threshold | None
+    steady_state: dict[str, Any] | None  # convergence guard, e.g. {rel_change_below: 1e-3}
+    oracle: dict[str, Any] | None  # independent cross-check, e.g. {kind, file, nrmse_below}
     figures: list[dict[str, Any]]
     path: Path  # the models/<slug>/ directory
     raw: dict[str, Any]
@@ -146,6 +148,14 @@ def load_card(card_yaml: str | Path) -> ModelCard:
     if not model_path.exists():
         raise CardError(f"{slug}: model file not found: {model_path}")
 
+    val = raw["validation"]
+    steady_state = val.get("steady_state")
+    oracle = val.get("oracle")
+    if oracle and "file" in oracle:
+        oracle_path = card_yaml.parent / oracle["file"]
+        if not oracle_path.exists():
+            raise CardError(f"{slug}: oracle file not found: {oracle_path}")
+
     return ModelCard(
         slug=slug,
         title=raw.get("title", slug),
@@ -156,6 +166,8 @@ def load_card(card_yaml: str | Path) -> ModelCard:
         time=time,
         scenarios=scenarios,
         threshold=threshold,
+        steady_state=steady_state,
+        oracle=oracle,
         figures=list(raw.get("figures", [])),
         path=card_yaml.parent,
         raw=raw,

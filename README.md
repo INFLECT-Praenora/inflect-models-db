@@ -80,7 +80,50 @@ docs/                  workflow.md · model-card-schema.md
 .claude/skills/extract-model/   the extraction skill (see below)
 ```
 
-## Adding a model
+## Validation
+
+Each model is held to more than a single endpoint. A model passes only when
+**every** built-in check holds (all driven off `card.yaml`):
+
+- **Published steady states** — each scenario settles within tolerance of the
+  values reported in the paper.
+- **Convergence guard** — the run actually reached steady state, so targets
+  aren't read mid-transient.
+- **Threshold / bifurcation** — a declared qualitative boundary reproduces.
+- **Independent oracle** — when the model is deposited elsewhere (e.g. a curated
+  BioModels SBML, CC0), validation simulates *that* encoding through a separate
+  code path and checks the extracted Antimony reproduces its **full trajectory**
+  by NRMSE — corroboration, not a tautology.
+
+```
+inflect-models validate     # prints every check, PASS/FAIL
+```
+
+## Contributing a model — papers in, validated models out
+
+Models are added by **pull request**, and a PR merges into `main` **only when the
+Antimony has been created and validated** — CI (`scripts/check_models.py`) stays
+red while a model is just a paper.
+
+```
+  open a PR with      run the extract-model          CI gate passes →
+  the paper (PDF/  ─► skill on the PR branch:     ─►  maintainer merges
+  CITATION.md)        model.ant + card.yaml,           to main
+                      validated vs the paper
+```
+
+1. **Open a PR** adding `models/<slug>/paper/CITATION.md` (+ the PDF only if its
+   licence permits). CI reports the model as *pending extraction* — this is what
+   blocks the merge.
+2. **Run `/extract-model`** on the PR branch (any Claude Code user): it authors a
+   faithful `model.ant` + `card.yaml`, runs it through viva-tellurium, and
+   iterates until it reproduces the published results. Commit to the same PR.
+3. **Merge when green** — `python scripts/check_models.py` must print `gate: PASS`.
+
+Full details: **[CONTRIBUTING.md](./CONTRIBUTING.md)**. Tolerances are never
+widened to force a pass — a failing check means the model or the target is wrong.
+
+## Adding a model (as a maintainer)
 
 Invoke the **`extract-model`** skill — it walks the full procedure: read the
 paper, author faithful Antimony, pick validation targets from the paper's

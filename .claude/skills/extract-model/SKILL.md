@@ -91,6 +91,17 @@ where in the paper they come from (figure/table). Set tolerances to a few
 percent of the value, loose enough for integrator differences, tight enough to
 be meaningful.
 
+**Make the validation strong — add these to the card when you can:**
+
+- `steady_state: {rel_change_below: 1.0e-3}` — a convergence guard so the
+  endpoint targets can't be read mid-transient. Add it for every model.
+- `oracle: {kind: sbml, file: reference/<id>.xml, nrmse_below: 1.0e-3}` — if the
+  model is deposited in BioModels (CC0) or ships a reference SBML, commit it to
+  `reference/` and declare it. Validation simulates that encoding independently
+  and checks the full trajectory, not just endpoints — the strongest automatic
+  check available.
+- a `threshold` block whenever the paper reports a qualitative boundary.
+
 ### 5. Write `card.yaml`
 
 Follow `docs/model-card-schema.md`. Minimum: `slug`, `source` (with a
