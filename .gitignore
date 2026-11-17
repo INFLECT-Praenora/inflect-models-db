@@ -1,0 +1,23 @@
+# Paper PDFs are only committed when the licence permits redistribution.
+# By default, keep paywalled PDFs local (store paper/CITATION.md instead).
+models/**/paper/*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Environments
+.venv/
+venv/
+env/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

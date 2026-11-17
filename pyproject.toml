@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inflect-models-db"
+version = "0.1.0"
+description = "Curated database of published dynamical models extracted to Antimony, validated against published results by running through viva-tellurium (INFLECT / ARPA-H CIRCLE)."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "viva-tellurium",
+    "numpy",
+    "pyyaml",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.uv.sources]
+viva-tellurium = { git = "https://github.com/vivarium-collective/viva-tellurium.git", branch = "main" }
+
+[tool.setuptools.packages.find]
+include = ["inflect_models_db*"]
+
+[project.scripts]
+inflect-models = "inflect_models_db.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

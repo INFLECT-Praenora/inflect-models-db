@@ -1,0 +1,80 @@
+slug: reynolds-2006-acute-inflammation
+title: Reduced model of the acute inflammatory response
+
+source:
+  authors: "Reynolds, Rubin, Clermont, Day, Vodovotz, Ermentrout"
+  year: 2006
+  title: >-
+    A reduced mathematical model of the acute inflammatory response:
+    I. Derivation of model and analysis of anti-inflammation
+  journal: Journal of Theoretical Biology
+  volume: "242(1)"
+  pages: "220-236"
+  doi: 10.1016/j.jtbi.2006.02.016
+  pubmed: "16584750"
+  biomodels: BIOMD0000000714
+
+model:
+  file: model.ant
+  format: antimony
+  species: [P, Nstar, D, C_A]
+  state_meaning:
+    P: Pathogen load
+    Nstar: Activated phagocytes (neutrophils/macrophages)
+    D: Tissue damage
+    C_A: Anti-inflammatory mediators (cortisol, IL-10)
+  provenance: >-
+    Four ODEs and all 21 parameters transcribed from Reynolds et al. 2006
+    (rate-rule form). Parameters cross-checked against the community-curated
+    SBML in BioModels BIOMD0000000714 (HealthyOutcome variant); the
+    hand-authored Antimony reproduces that model's steady states to 4 decimals.
+
+validation:
+  description: >-
+    Reproduces the paper's central result: a threshold in the initial pathogen
+    load P(0) separates a *healthy* outcome (pathogen cleared, all variables
+    return to baseline) from an *aseptic death* outcome (pathogen cleared but
+    self-sustaining inflammation leaves persistent tissue damage). Steady-state
+    values are read at t = 500 h, by which point both attractors are reached.
+  time:
+    start: 0
+    end: 500
+    n_points: 501
+    units: hours
+
+  scenarios:
+    - name: healthy
+      description: Low initial pathogen dose; the host clears it and recovers.
+      initials: {P: 0.5, Nstar: 0.0, D: 0.0, C_A: 0.125}
+      expect:
+        P:     {target: 0.0,   tol: 0.01}
+        Nstar: {target: 0.0,   tol: 0.01}
+        D:     {target: 0.0,   tol: 0.05}
+        C_A:   {target: 0.125, tol: 0.02}
+
+    - name: aseptic-death
+      description: >-
+        Higher initial pathogen dose; the pathogen is cleared but the
+        inflammatory response becomes self-sustaining, settling on a damaged
+        steady state.
+      initials: {P: 1.5, Nstar: 0.0, D: 0.0, C_A: 0.125}
+      expect:
+        P:     {target: 0.0,    tol: 0.01}
+        Nstar: {target: 0.635,  tol: 0.05}
+        D:     {target: 17.40,  tol: 0.6}
+        C_A:   {target: 0.523,  tol: 0.05}
+
+  threshold:
+    variable: P            # control: initial pathogen load
+    between: [1.0, 1.2]    # the healthy/aseptic boundary lies in this bracket
+    classify_by:
+      variable: D          # readout: final tissue damage
+      healthy_below: 1.0   # D < 1 => healthy; D high => non-healthy attractor
+
+figures:
+  - name: outcomes
+    kind: outcome-scenarios
+    file: figures/outcomes.png
+    caption: >-
+      Time courses of P, N*, D, C_A for the healthy and aseptic-death
+      scenarios, reproducing the distinct outcomes of Reynolds 2006.

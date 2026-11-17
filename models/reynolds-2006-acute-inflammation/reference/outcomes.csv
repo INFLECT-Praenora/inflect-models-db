@@ -1,0 +1,6 @@
+# Published steady-state outcomes (Reynolds 2006), read at t = 500 h.
+# These are the reference values the validation scenarios assert against;
+# they match the community-curated SBML BIOMD0000000714 to 4 decimals.
+scenario,P0,P_final,Nstar_final,D_final,C_A_final,outcome
+healthy,0.5,0.0000,0.0000,0.0000,0.1251,healthy
+aseptic-death,1.5,0.0000,0.6350,17.3973,0.5229,aseptic death
