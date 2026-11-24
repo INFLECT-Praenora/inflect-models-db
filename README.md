@@ -25,6 +25,31 @@ Models are executed by wrapping their Antimony as a `viva_tellurium`
 composes with. A model validated here drops straight into a bigraph document as
 a Process; it is not a throwaway reproduction script.
 
+## Running a model in the simulation-core
+
+Every curated model also exposes a **process-bigraph composite**, so it drops
+directly into [`inflect-sim-core`](https://github.com/INFLECT-Praenora/inflect-sim-core)
+(or any bigraph document) with no per-model wiring — the `card.yaml` *is* the run
+spec (model, named scenarios, observable species, time window).
+
+```bash
+inflect-models composites        # the composite + scenarios each model exposes
+```
+
+```python
+from inflect_models_db import bigraph, registry
+
+bigraph.register_all()           # register every model as a composite generator
+card = registry.get_model("reynolds-2006-acute-inflammation")
+req = bigraph.scenario_request(card, "aseptic-death")   # {antimony, initials, observables, duration, interval, ...}
+```
+
+The composite generator is named `modelsdb_<slug>`, takes a `scenario` knob (the
+card's named scenarios), and emits the card's observable species. simulation-core
+discovers these at catalog-build time, so every database model appears in its
+workbench and resolves by slug through `simulate("<slug>")`. See
+[`docs/superpowers/specs/2026-11-24-sim-core-integration-design.md`](docs/superpowers/specs/2026-11-24-sim-core-integration-design.md).
+
 ## Install
 
 ```bash

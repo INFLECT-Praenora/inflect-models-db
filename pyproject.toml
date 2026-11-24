@@ -10,7 +10,12 @@ readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
 dependencies = [
-    "viva-tellurium",
+    # Pinned @<sha> (not branch=main) so a consumer that also pins viva-tellurium
+    # (e.g. inflect-sim-core) resolves to the SAME url — a branch source here
+    # collides with their @sha pin ("conflicting URLs for viva-tellurium").
+    # process-bigraph comes transitively via viva-tellurium (keep it unpinned here
+    # so it never conflicts with a consumer's process-bigraph source).
+    "viva-tellurium @ git+https://github.com/vivarium-collective/viva-tellurium@2d07d068bb4dd713c9ed61f59747d21b49498cc2",
     "numpy",
     "pyyaml",
     "matplotlib",
@@ -18,9 +23,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
-
-[tool.uv.sources]
-viva-tellurium = { git = "https://github.com/vivarium-collective/viva-tellurium.git", branch = "main" }
 
 [tool.setuptools.packages.find]
 include = ["inflect_models_db*"]
