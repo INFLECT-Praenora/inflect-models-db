@@ -12,11 +12,15 @@ and physiological models.
 
 Every model ships with:
 
+- `extraction.yaml` — the **structured reading of the paper** (state variables,
+  equations, parameters, targets — each cited to where it came from), authored
+  before the Antimony and reconciled against it by the fidelity grade;
 - `model.ant` — the Antimony, faithful to the paper's equations and parameters;
 - `card.yaml` — the source citation plus **quantitative validation targets**;
 - `reference/` — the published numbers those targets come from;
 - `figures/` — a machine-generated reproduction to compare against the paper;
-- a test (parametrized, automatic) asserting the model reproduces the targets.
+- a test (parametrized, automatic) asserting the model reproduces the targets
+  **and** that the Antimony reconciles with its `extraction.yaml`.
 
 ## Why run through viva-tellurium?
 
@@ -92,9 +96,10 @@ reproduce_figures(card)
 ## Repository layout
 
 ```
-inflect_models_db/          the library: registry · run (viva-tellurium) · validate · bigraph
+inflect_models_db/          the library: registry · run (viva-tellurium) · validate · grade · bigraph
   models/<slug>/            the curated models live INSIDE the package, so they
                             ship in the wheel (a plain `pip install` has them):
+    extraction.yaml        structured reading of the paper (see docs/extraction-schema.md)
     model.ant              Antimony model extracted from the paper
     card.yaml              citation + validation targets (see docs/model-card-schema.md)
     paper/CITATION.md      DOI/links (PDF only if its licence permits redistribution)
@@ -102,7 +107,7 @@ inflect_models_db/          the library: registry · run (viva-tellurium) · val
     figures/*.png          generated reproduction
     README.md              the model card
 tests/                      parametrized over every model — new entries tested automatically
-docs/                       workflow.md · model-card-schema.md
+docs/                       workflow.md · model-card-schema.md · extraction-schema.md
 .claude/skills/extract-model/   the extraction skill (see below)
 ```
 
@@ -126,6 +131,21 @@ Each model is held to more than a single endpoint. A model passes only when
 
 ```
 inflect-models validate     # prints every check, PASS/FAIL
+```
+
+### Fidelity grade — did the Antimony faithfully encode the paper?
+
+Validation checks the *numbers*; a model could still hit them with the wrong
+mechanism (a parameter transcribed wrong but masked by the fit). The **fidelity
+grade** is the structural complement: it reconciles the Antimony against the
+model's `extraction.yaml` — every state has a species and an equation, the
+parameter sets match exactly (assignment-rule auxiliaries excluded), and every
+parameter and target is cited. Deterministic and CI-gating for any model that
+ships an `extraction.yaml`; an optional, non-gating LLM reviewer can add a 1–5
+faithfulness score (`--llm`, via `INFLECT_LLM_REVIEW_CMD`).
+
+```
+inflect-models grade        # prints every fidelity component, PASS/FAIL
 ```
 
 ## Contributing a model — papers in, validated models out

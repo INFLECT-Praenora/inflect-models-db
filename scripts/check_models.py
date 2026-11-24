@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from inflect_models_db.card import load_card
+from inflect_models_db.grade import grade_model
 from inflect_models_db.registry import models_root
 from inflect_models_db.run import build_core
 from inflect_models_db.validate import validate_model
@@ -69,6 +70,27 @@ def main() -> int:
             for line in report.summary().splitlines()[1:]:
                 if "FAIL" in line or "FAILED" in line:
                     print(f"          {line.strip()}")
+
+        # Fidelity grade (only for models that ship an extraction.yaml; others
+        # are unaffected). Structural reconciliation of the Antimony vs the
+        # paper's structured reading — complements the numeric validation above.
+        try:
+            grade = grade_model(card)
+        except Exception as e:  # noqa: BLE001
+            ok = False
+            print(f"[ERROR]   {slug}: fidelity grade raised: {e}")
+            continue
+        if grade is None:
+            continue  # no extraction.yaml — nothing to grade
+        if grade.ok:
+            print(f"[OK]      {slug}: fidelity grade ({grade.score:.0%}) — "
+                  f"Antimony reconciles with extraction.yaml")
+        else:
+            ok = False
+            print(f"[FAIL]    {slug}: fidelity grade:")
+            for comp in grade.components:
+                if not comp.ok:
+                    print(f"          {comp}")
 
     print()
     if ok:

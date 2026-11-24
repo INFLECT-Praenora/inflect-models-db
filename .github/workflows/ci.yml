@@ -30,8 +30,11 @@ jobs:
       - name: Run tests
         run: .venv/bin/pytest -q
 
-      - name: Validation gate (every model must be extracted + validated)
+      - name: Validation + fidelity gate (every model extracted, validated, and graded)
         run: .venv/bin/python scripts/check_models.py
+
+      - name: Fidelity grade (structural reconciliation vs extraction.yaml)
+        run: .venv/bin/python -m inflect_models_db.cli grade
 
       - name: Reproduce figures (sanity check the renderer)
         run: .venv/bin/python -m inflect_models_db.cli reproduce

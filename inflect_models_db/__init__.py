@@ -6,6 +6,13 @@ quantitative results reported in its source paper.
 """
 
 from inflect_models_db.card import CardError, ModelCard, Scenario, Threshold, load_card
+from inflect_models_db.extraction import (
+    Extraction,
+    ExtractionError,
+    extraction_for,
+    load_extraction,
+)
+from inflect_models_db.grade import FidelityReport, GradeComponent, grade_model
 from inflect_models_db.registry import all_cards, get_model, list_models, models_root
 from inflect_models_db.run import (
     Trajectory,
@@ -39,6 +46,13 @@ __all__ = [
     "Scenario",
     "Threshold",
     "load_card",
+    "Extraction",
+    "ExtractionError",
+    "extraction_for",
+    "load_extraction",
+    "FidelityReport",
+    "GradeComponent",
+    "grade_model",
     "all_cards",
     "get_model",
     "list_models",
