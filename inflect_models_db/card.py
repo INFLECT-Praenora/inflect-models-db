@@ -4,7 +4,7 @@ A *model card* (``card.yaml``) is the contract for one curated model: where the
 Antimony lives, what published work it was extracted from, and the quantitative
 targets its output must reproduce. Everything downstream (running, validating,
 reproducing figures, tests) is driven off the card, so adding a model is purely
-a matter of dropping a ``model.ant`` + ``card.yaml`` into ``models/<slug>/``.
+a matter of dropping a ``model.ant`` + ``card.yaml`` into ``inflect_models_db/models/<slug>/``.
 """
 
 from __future__ import annotations
@@ -63,7 +63,7 @@ class ModelCard:
     steady_state: dict[str, Any] | None  # convergence guard, e.g. {rel_change_below: 1e-3}
     oracle: dict[str, Any] | None  # independent cross-check, e.g. {kind, file, nrmse_below}
     figures: list[dict[str, Any]]
-    path: Path  # the models/<slug>/ directory
+    path: Path  # the inflect_models_db/models/<slug>/ directory
     raw: dict[str, Any]
 
     # --- convenience accessors ---------------------------------------------

@@ -17,7 +17,7 @@ The flow has three roles — you may play all three, or hand off the middle step
 
 ## 1. Open a PR with the paper
 
-Create `models/<slug>/` (slug = `<firstauthor>-<year>-<short-topic>`, e.g.
+Create `inflect_models_db/models/<slug>/` (slug = `<firstauthor>-<year>-<short-topic>`, e.g.
 `reynolds-2006-acute-inflammation`) containing:
 
 - `paper/CITATION.md` — authors, title, journal, **DOI / PubMed / BioModels id**.

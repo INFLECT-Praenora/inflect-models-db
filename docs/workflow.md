@@ -4,8 +4,8 @@
    paper (equations, parameters, figures)
         │   read by a human / agent (see the extract-model skill)
         ▼
-   models/<slug>/model.ant          ← faithful Antimony
-   models/<slug>/card.yaml          ← published validation targets
+   inflect_models_db/models/<slug>/model.ant          ← faithful Antimony
+   inflect_models_db/models/<slug>/card.yaml          ← published validation targets
         │
         │   inflect_models_db.run.run_scenario(...)
         ▼
@@ -13,7 +13,7 @@
         │
         ▼
    Trajectory ──► validate_model ──► PASS/FAIL vs published steady states + threshold
-            └────► reproduce_figures ──► models/<slug>/figures/*.png
+            └────► reproduce_figures ──► inflect_models_db/models/<slug>/figures/*.png
 ```
 
 The design choice that matters: models run **through viva-tellurium**, the same
@@ -25,7 +25,7 @@ bigraph document — not a throwaway reproduction script.
 
 Use the `extract-model` skill — it walks the full procedure. In short:
 
-1. `models/<slug>/` with `model.ant` + `card.yaml`.
+1. `inflect_models_db/models/<slug>/` with `model.ant` + `card.yaml`.
 2. `python -m inflect_models_db.cli validate <slug>` until green.
 3. `python -m inflect_models_db.cli reproduce <slug>` to regenerate figures.
 4. `pytest -k <slug>`.

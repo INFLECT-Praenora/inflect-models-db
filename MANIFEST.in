@@ -1,0 +1,4 @@
+# Ship the curated models inside the wheel so a plain `pip install` (not only an
+# editable/source checkout) exposes the database. The files live under the package
+# at inflect_models_db/models/<slug>/ (model.ant, card.yaml, reference/, figures/, paper/).
+recursive-include inflect_models_db/models *

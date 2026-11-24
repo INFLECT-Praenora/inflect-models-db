@@ -1,6 +1,6 @@
 # Paper PDFs are only committed when the licence permits redistribution.
 # By default, keep paywalled PDFs local (store paper/CITATION.md instead).
-models/**/paper/*.pdf
+inflect_models_db/models/**/paper/*.pdf
 
 # Python
 __pycache__/
