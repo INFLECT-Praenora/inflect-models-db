@@ -1,10 +1,10 @@
-"""Discover curated models under ``models/``.
+"""Discover curated models under ``inflect_models_db/models/``.
 
-A model lives in ``models/<slug>/`` and is recognised by the presence of a
-``card.yaml``. The models root defaults to the ``models/`` directory next to
-the installed package (i.e. the repo checkout); override with the
-``INFLECT_MODELS_DB_ROOT`` environment variable when running against a copy
-elsewhere.
+A model lives in ``inflect_models_db/models/<slug>/`` and is recognised by the
+presence of a ``card.yaml``. The models live **inside the package** so they ship
+in the wheel — a plain ``pip install`` (or ``pip install git+<repo>``) exposes the
+curated database, not just an editable/source checkout. Override the root with the
+``INFLECT_MODELS_DB_ROOT`` environment variable to point at a copy elsewhere.
 """
 
 from __future__ import annotations
@@ -14,7 +14,9 @@ from pathlib import Path
 
 from inflect_models_db.card import ModelCard, load_card
 
-_DEFAULT_ROOT = Path(__file__).resolve().parent.parent / "models"
+# Inside the package (ships in the wheel). Resolve both the installed location and
+# the source checkout, since they are the same path relative to this file.
+_DEFAULT_ROOT = Path(__file__).resolve().parent / "models"
 
 
 def models_root() -> Path:

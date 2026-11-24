@@ -2,7 +2,7 @@
 """Merge gate: every model directory must hold a validated model.
 
 Run in CI (and locally before opening/merging a PR). It walks **every**
-subdirectory of ``models/`` — not just the ones with a ``card.yaml`` — so a
+subdirectory of ``inflect_models_db/models/`` — not just the ones with a ``card.yaml`` — so a
 paper-only submission (a PDF with no Antimony yet) is reported as *pending
 extraction* and fails the gate. A model is accepted only when its Antimony has
 been created and it validates against the published results in its card.

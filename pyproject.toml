@@ -27,6 +27,23 @@ dev = ["pytest"]
 [tool.setuptools.packages.find]
 include = ["inflect_models_db*"]
 
+# Ship the curated models (model.ant + card.yaml + reference/ + figures/ + paper/)
+# INSIDE the wheel, so `pip install` exposes the database — not only an editable
+# source checkout. The files live under inflect_models_db/models/ (see registry.py);
+# include_package_data pulls them in via MANIFEST.in's recursive-include.
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+inflect_models_db = [
+    "models/**/*.ant",
+    "models/**/*.yaml",
+    "models/**/*.csv",
+    "models/**/*.xml",
+    "models/**/*.png",
+    "models/**/*.md",
+]
+
 [project.scripts]
 inflect-models = "inflect_models_db.cli:main"
 

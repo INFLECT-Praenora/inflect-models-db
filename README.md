@@ -92,18 +92,22 @@ reproduce_figures(card)
 ## Repository layout
 
 ```
-models/<slug>/
-  model.ant            Antimony model extracted from the paper
-  card.yaml            citation + validation targets (see docs/model-card-schema.md)
-  paper/CITATION.md    DOI/links (PDF only if its licence permits redistribution)
-  reference/*.csv      published numbers the targets assert against
-  figures/*.png        generated reproduction
-  README.md            the model card
-inflect_models_db/     the library: registry · run (viva-tellurium) · validate
-tests/                 parametrized over every model — new entries tested automatically
-docs/                  workflow.md · model-card-schema.md
+inflect_models_db/          the library: registry · run (viva-tellurium) · validate · bigraph
+  models/<slug>/            the curated models live INSIDE the package, so they
+                            ship in the wheel (a plain `pip install` has them):
+    model.ant              Antimony model extracted from the paper
+    card.yaml              citation + validation targets (see docs/model-card-schema.md)
+    paper/CITATION.md      DOI/links (PDF only if its licence permits redistribution)
+    reference/*.csv        published numbers the targets assert against
+    figures/*.png          generated reproduction
+    README.md              the model card
+tests/                      parametrized over every model — new entries tested automatically
+docs/                       workflow.md · model-card-schema.md
 .claude/skills/extract-model/   the extraction skill (see below)
 ```
+
+> Point `INFLECT_MODELS_DB_ROOT` at any `…/models` directory to run against a
+> different set than the packaged one.
 
 ## Validation
 
@@ -137,7 +141,7 @@ red while a model is just a paper.
                       validated vs the paper
 ```
 
-1. **Open a PR** adding `models/<slug>/paper/CITATION.md` (+ the PDF only if its
+1. **Open a PR** adding `inflect_models_db/models/<slug>/paper/CITATION.md` (+ the PDF only if its
    licence permits). CI reports the model as *pending extraction* — this is what
    blocks the merge.
 2. **Run `/extract-model`** on the PR branch (any Claude Code user): it authors a
