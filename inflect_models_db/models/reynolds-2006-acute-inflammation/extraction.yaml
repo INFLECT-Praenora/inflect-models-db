@@ -1,0 +1,90 @@
+# Structured reading of Reynolds et al. 2006, authored before model.ant and
+# reconciled against it by `inflect-models grade`. Equations are in rate-rule
+# form exactly as they appear in model.ant; parameter values are the published
+# values (cross-checked against BioModels BIOMD0000000714 — see card.model.provenance).
+slug: reynolds-2006-acute-inflammation
+
+source:
+  authors: "Reynolds, Rubin, Clermont, Day, Vodovotz, Ermentrout"
+  year: 2006
+  doi: 10.1016/j.jtbi.2006.02.016
+
+state_variables:
+  - id: P
+    meaning: Pathogen load
+    units: model units (nondimensional)
+  - id: Nstar
+    meaning: Activated phagocytes (N*, neutrophils/macrophages)
+    units: model units (nondimensional)
+  - id: D
+    meaning: Tissue damage
+    units: model units (nondimensional)
+  - id: C_A
+    meaning: Anti-inflammatory mediators (cortisol, IL-10)
+    units: model units (nondimensional)
+
+equations:
+  - state: P
+    rhs: "k_pg*P*(1 - P/p_inf) - k_pm*s_m*P/(mu_m + k_mp*P) - k_pn*f(Nstar)*P"
+    source: "Reynolds 2006, Eq. for dP/dt (§2, local pathogen growth / non-specific + phagocyte killing)"
+  - state: Nstar
+    rhs: "s_nr*R/(mu_nr + R) - mu_n*Nstar,  with R = (k_nn*Nstar + k_np*P + k_nd*D)/(1+(C_A/c_inf)^2)"
+    source: "Reynolds 2006, Eq. for dN*/dt (§2, phagocyte activation with anti-inflammatory modulation)"
+  - state: D
+    rhs: "k_dn*f(Nstar)^6/(x_dn^6 + f(Nstar)^6) - mu_d*D"
+    source: "Reynolds 2006, Eq. for dD/dt (§2, damage as a Hill function of activated phagocytes)"
+  - state: C_A
+    rhs: "s_c + k_cn*g/(1+g) - mu_c*C_A,  with g = (Nstar + k_cnd*D)/(1+(C_A/c_inf)^2)"
+    source: "Reynolds 2006, Eq. for dC_A/dt (§2, anti-inflammatory production + decay)"
+
+# f(Nstar) = Nstar/(1+(C_A/c_inf)^2) is the anti-inflammatory down-modulation
+# shared across equations (model.ant auxiliary f_Nstar); not an independent state.
+
+parameters:
+  - {id: k_pg,  value: 0.3,    units: "1/h",         source: "Reynolds 2006, parameter table (pathogen growth rate)"}
+  - {id: p_inf, value: 20,     units: "model units", source: "Reynolds 2006, parameter table (pathogen carrying capacity)"}
+  - {id: k_pm,  value: 0.6,    units: "1/h",         source: "Reynolds 2006, parameter table (non-specific killing rate)"}
+  - {id: s_m,   value: 0.005,  units: "model units", source: "Reynolds 2006, parameter table (non-specific response source)"}
+  - {id: mu_m,  value: 0.002,  units: "1/h",         source: "Reynolds 2006, parameter table (non-specific response decay)"}
+  - {id: k_mp,  value: 0.01,   units: "1/h",         source: "Reynolds 2006, parameter table (pathogen saturation of non-specific killing)"}
+  - {id: k_pn,  value: 1.8,    units: "1/h",         source: "Reynolds 2006, parameter table (phagocyte killing of pathogen)"}
+  - {id: s_nr,  value: 0.08,   units: "model units", source: "Reynolds 2006, parameter table (phagocyte activation source)"}
+  - {id: mu_nr, value: 0.12,   units: "model units", source: "Reynolds 2006, parameter table (phagocyte activation half-saturation)"}
+  - {id: mu_n,  value: 0.05,   units: "1/h",         source: "Reynolds 2006, parameter table (activated phagocyte decay)"}
+  - {id: k_nn,  value: 0.01,   units: "model units", source: "Reynolds 2006, parameter table (phagocyte self-activation)"}
+  - {id: k_np,  value: 0.1,    units: "model units", source: "Reynolds 2006, parameter table (pathogen-driven activation)"}
+  - {id: k_nd,  value: 0.02,   units: "model units", source: "Reynolds 2006, parameter table (damage-driven activation)"}
+  - {id: k_dn,  value: 0.35,   units: "1/h",         source: "Reynolds 2006, parameter table (max damage production rate)"}
+  - {id: x_dn,  value: 0.06,   units: "model units", source: "Reynolds 2006, parameter table (Hill half-max for damage)"}
+  - {id: mu_d,  value: 0.02,   units: "1/h",         source: "Reynolds 2006, parameter table (damage resolution rate)"}
+  - {id: s_c,   value: 0.0125, units: "model units", source: "Reynolds 2006, parameter table (anti-inflammatory baseline source)"}
+  - {id: k_cn,  value: 0.04,   units: "1/h",         source: "Reynolds 2006, parameter table (anti-inflammatory production)"}
+  - {id: k_cnd, value: 48,     units: "model units", source: "Reynolds 2006, parameter table (damage weight in anti-inflammatory drive)"}
+  - {id: mu_c,  value: 0.1,    units: "1/h",         source: "Reynolds 2006, parameter table (anti-inflammatory decay)"}
+  - {id: c_inf, value: 0.28,   units: "model units", source: "Reynolds 2006, parameter table (anti-inflammatory saturation constant)"}
+
+initial_conditions:
+  - {state: P,     value: 1.0,   source: "healthy baseline; scenarios override P as the pathogen dose"}
+  - {state: Nstar, value: 0.0,   source: "healthy baseline (no activated phagocytes at t=0)"}
+  - {state: D,     value: 0.0,   source: "healthy baseline (no tissue damage at t=0)"}
+  - {state: C_A,   value: 0.125, source: "healthy baseline anti-inflammatory level (Reynolds 2006, s_c/mu_c)"}
+
+targets:
+  - id: healthy-steady-state
+    describes: "Low pathogen dose is cleared; all variables return to baseline (P,N*,D->0, C_A->0.125)."
+    source: "Reynolds 2006, §3 results — healthy outcome time course"
+  - id: aseptic-death-steady-state
+    describes: "Higher dose is cleared but inflammation self-sustains, settling on a damaged fixed point."
+    source: "Reynolds 2006, §3 results — aseptic death outcome time course"
+  - id: pathogen-bistability-threshold
+    describes: "A threshold in initial P(0) separates the healthy and aseptic-death attractors."
+    source: "Reynolds 2006, §3 — bistability / threshold in initial pathogen load"
+
+notes: >-
+  Reduced (4-variable) model from Part I of Reynolds et al. 2006. The three
+  rhs terms using f(Nstar) and the anti-inflammatory factor 1/(1+(C_A/c_inf)^2)
+  are implemented in model.ant as assignment-rule auxiliaries (f_Nstar, f_D_hill,
+  R, g_CA); those are derived quantities, not published parameters, and the grade
+  excludes them from parameter reconciliation. Parameter values were cross-checked
+  against the curated SBML BIOMD0000000714 (see card.model.provenance and the
+  oracle cross-check in card.validation).
