@@ -40,6 +40,23 @@ def _cmd_reproduce(args) -> int:
     return 0
 
 
+def _cmd_composites(_args) -> int:
+    """Show the process-bigraph composite each model exposes — the handle a host
+    (e.g. simulation-core) runs it by."""
+    from inflect_models_db import bigraph
+
+    cards = all_cards()
+    if not cards:
+        print("no models found")
+        return 0
+    for card in cards:
+        obs = ", ".join(bigraph.card_observables(card))
+        scen = ", ".join(card.scenario_names)
+        print(f"{bigraph.generator_name(card.slug):44s} "
+              f"scenarios=[{scen}] observables=[{obs}]")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="inflect-models")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -53,6 +70,11 @@ def main(argv: list[str] | None = None) -> int:
     p_rep = sub.add_parser("reproduce", help="regenerate validation figures")
     p_rep.add_argument("slug", nargs="?", help="model slug (default: all)")
     p_rep.set_defaults(func=_cmd_reproduce)
+
+    sub.add_parser(
+        "composites",
+        help="list the process-bigraph composite each model exposes (for simulation-core)",
+    ).set_defaults(func=_cmd_composites)
 
     args = parser.parse_args(argv)
     return args.func(args)
